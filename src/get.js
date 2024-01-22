@@ -5,7 +5,7 @@ import path from "node:path";
 
 import progress from "cli-progress";
 import tar from "tar";
-import unzipper from "unzipper";
+import unzipStream from 'unzip-stream';
 
 import util from "./util.js";
 
@@ -125,7 +125,7 @@ const getNwjs = async (options) => {
     } else {
       await new Promise((res) => {
         fs.createReadStream(out)
-          .pipe(unzipper.Extract({ path: options.cacheDir }))
+          .pipe(unzipStream.Extract({ path: options.cacheDir }))
           .on("finish", res);
       });
       if (options.platform === "osx") {
@@ -202,7 +202,7 @@ const getNwjs = async (options) => {
   } else {
     await new Promise((res) => {
       fs.createReadStream(out)
-        .pipe(unzipper.Extract({ path: options.cacheDir }))
+        .pipe(unzipStream.Extract({ path: options.cacheDir }))
         .on("finish", res);
     });
     if (options.platform === "osx") {
@@ -236,7 +236,7 @@ const getFfmpeg = async (options) => {
   // Check if cache exists.
   if (fs.existsSync(out) === true) {
     fs.createReadStream(out)
-      .pipe(unzipper.Extract({ path: nwDir }));
+      .pipe(unzipStream.Extract({ path: nwDir }));
     return;
   }
 
@@ -276,7 +276,7 @@ const getFfmpeg = async (options) => {
   // Remove compressed file after download and decompress.
   await request;
   fs.createReadStream(out)
-    .pipe(unzipper.Extract({ path: nwDir }));
+    .pipe(unzipStream.Extract({ path: nwDir }));
   await util.replaceFfmpeg(options.platform, nwDir);
 }
 
