@@ -48,7 +48,7 @@ async function unzip(zippedFile, cacheDir) {
  * @param  {boolean}       unzipSymlink  - Using or not symlink
  * @return {Promise<void>}
  */
-async function unzipInternal(zippedFile, cacheDir, unzipSymlink )  {
+async function unzipInternal(zippedFile, cacheDir, unzipSymlink) {
   const zip = await yauzl.open(zippedFile);
 
   let entry = await zip.readEntry();
@@ -66,17 +66,24 @@ async function unzipInternal(zippedFile, cacheDir, unzipSymlink )  {
         const writeStream = fs.createWriteStream(entryPathAbs);
         await stream.promises.pipeline(readStream, writeStream);
       } else {
-        // Need check before if file is a symlink or not at this point
-        const pathContent = await fs.promises.lstat(entryPathAbs);
-
-        if (pathContent.isSymbolicLink()) {
+        /**
+         * Need check before if file is a symlink or not at this point
+         * Note: if it doesn't exist this will be return null
+         */
+        const pathContent = await fs.promises.lstat(entryPathAbs).catch(() => null);
+        if (pathContent === null) {
+          if (entryPathAbs.endsWith('/')) {
+            await fs.promises.mkdir(path.dirname(entryPathAbs), {recursive: true});
+          }
+        }
+        if (pathContent !== null && pathContent.isSymbolicLink()) {
           const chunks = [];
           readStream.on('data', (chunk) => chunks.push(chunk));
           await stream.promises.finished(readStream);
           // need fetch value of current symlink here
           const linkTarget = Buffer.concat(chunks).toString('utf8').trim();
           await ensureSymlink(entryPathAbs, path.join(path.dirname(entryPathAbs), linkTarget));
-        }else{
+        } else {
           // Regular method and silent error at this point
           const writeStream = fs.createWriteStream(entryPathAbs);
           await stream.promises.pipeline(readStream, writeStream);
