@@ -34,7 +34,7 @@ export default async function decompress(filePath, cacheDir) {
  */
 async function unzip(zippedFile, cacheDir) {
   await unzipInternal(zippedFile, cacheDir, false).then(() => {
-    unzipInternal(zippedFile, cacheDir, true);
+   // unzipInternal(zippedFile, cacheDir, true);
   })
 }
 
@@ -63,7 +63,7 @@ async function unzipInternal(zippedFile, cacheDir, unzipSymlink) {
     try {
       if (!unzipSymlink) {
         // Regular method and silent error at this point
-        const writeStream = fs.createWriteStream(entryPathAbs);
+        const writeStream = fs.createWriteStream(entryPathAbs, {mode: entry.externalFileAttributes >>> 16});
         await stream.promises.pipeline(readStream, writeStream);
       } else {
         /**
@@ -85,7 +85,7 @@ async function unzipInternal(zippedFile, cacheDir, unzipSymlink) {
           await ensureSymlink(entryPathAbs, path.join(path.dirname(entryPathAbs), linkTarget));
         } else {
           // Regular method and silent error at this point
-          const writeStream = fs.createWriteStream(entryPathAbs);
+          const writeStream = fs.createWriteStream(entryPathAbs, {mode: entry.externalFileAttributes >>> 16});
           await stream.promises.pipeline(readStream, writeStream);
         }
       }
